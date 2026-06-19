@@ -25,19 +25,30 @@ behavior, not the code's agreement with itself.
 | HLR-GEO-011 | Auto-detect and parse a free-form coordinate string (DD/DMS/DDM/MGRS/UTM); reject garbage | `parse` | `Parse.DecimalDegrees`, `Parse.DmsWithHemispheres`, `Parse.RejectsGarbage`, `Format.RoundTripsThroughEveryFormat` |
 | HLR-GEO-012 | Best-effort format classification for UI hinting | `detect_format` | `Detect.ClassifiesByShape` |
 
-## Phase 2 — Tactical & Radar (in progress)
+## Phase 2 — Tactical & Radar (complete)
 
 | HLR | Requirement | Function | Test (`tests/`) |
 |-----|-------------|----------|-----------------|
 | HLR-GEO-020 | Magnetic field elements (declination, inclination, H, F) from WMM2025 at a point/time/height | `MagneticField::field` / `::declination` | `Magnetic.MatchesOfficialTestValues` |
 | HLR-GEO-021 | True ↔ magnetic bearing conversion (magnetic = true − declination) | `MagneticField::true_to_magnetic` / `::magnetic_to_true` | `Magnetic.TrueMagneticConversion` |
+| HLR-GEO-030 | Point → bullseye-relative (true bearing + range from reference) | `to_bullseye` | `Bullseye.ToBullseyeOnEquator`, `Bullseye.RoundTrip` |
+| HLR-GEO-031 | Bullseye-relative → absolute point | `from_bullseye` | `Bullseye.FromBullseyeOnEquator`, `Bullseye.RoundTrip` |
+| HLR-GEO-032 | BRAA bearing + ground range from ownship to target | `braa` | `Braa.BearingAndRange` |
+| HLR-GEO-033 | Target aspect angle (0=stern…180=hot) with L/R side | `aspect_angle` | `Aspect.CardinalPositions` |
+| HLR-GEO-040 | Exact 3D slant range between two positions at altitude (ECEF) | `slant_range` | `Slant.VerticalSeparation` |
+| HLR-GEO-041 | Slant ↔ ground range from heights (spherical radar triangle) | `slant_from_ground` / `ground_from_slant` | `SlantGround.ZeroGroundIsVertical`, `SlantGround.RoundTrip` |
+| HLR-GEO-042 | Radar horizon (4/3-earth) and line-of-sight test | `radar_horizon` / `radar_horizon_range` / `has_line_of_sight` | `Horizon.FourThirdsApproximation`, `LineOfSight.InsideAndBeyondHorizon` |
+| HLR-GEO-043 | Constant-velocity dead reckoning in local ENU (Kalman predict step) | `dead_reckon` | `DeadReckon.ZeroVelocityHolds`, `DeadReckon.MovesAlongVelocity` |
 
 Oracle: HLR-GEO-020 is verified against NOAA's official `WMM2025_TestValues.txt`
 (declination + inclination matched to 0.02°). WMM data (`data/wmm/wmm2025.wmm`
 + `.cof`, GeographicLib format, same coefficients as the supplied `WMM.COF`) is
-`--embed-file`'d into the WASM at `/data/wmm`.
+`--embed-file`'d into the WASM at `/data/wmm`. Tactical/radar HLRs use closed-form
+geometry (equator/meridian, cardinal aspect, vertical separation) and forward/
+inverse round-trips so a passing test proves the behaviour independently.
 
-Remaining Phase 2 (not yet implemented): bullseye, BRAA, slant/ground range,
-radar horizon / LOS, dead reckoning. Then Phase 3 route/area (waypoint chains,
-intersections, cross/along-track, sector containment, polygon). Each lands with
-its own HLR-GEO-0xx row and known-answer test.
+## Phase 3 (planned, not yet implemented)
+
+Route/area: waypoint chains, radial & range-range intersections, cross/along-track
+distance, sector containment, polygon (area, centroid, point-in-polygon). Each
+lands with its own HLR-GEO-0xx row and known-answer test.

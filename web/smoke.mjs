@@ -54,6 +54,18 @@ near(asp.angleDeg, 90, 1e-6, "aspect beam angle");
 if (asp.side !== "R") { console.error("FAIL aspect side", asp.side); failures++; }
 else console.log("ok   aspect side R");
 
+// radar: slant (vertical), horizon (~41km @ 100m, 4/3), LOS
+near(M.slantRange({ lat: 37, lon: 127 }, 0, { lat: 37, lon: 127 }, 9144), 9144, 1e-3, "slant vertical");
+near(M.radarHorizon(100, true) / 1000, 41.22, 0.1, "radar horizon 4/3");
+const losNear = M.forwardEllipsoidal({ lat: 37, lon: 127 }, 90, 50000);
+if (!M.hasLineOfSight({ lat: 37, lon: 127 }, 100, losNear, 100)) { console.error("FAIL LOS near"); failures++; }
+else console.log("ok   LOS within horizon");
+
+// dead reckoning: 250 m/s for 60 s => ~15 km along atan2(vE,vN)
+const dr = M.deadReckon({ lat: 37, lon: 127 }, 200, 150, 60);
+const drArc = M.inverseEllipsoidal({ lat: 37, lon: 127 }, dr);
+near(drArc.distanceM, 15000, 1, "dead reckon distance");
+
 // exceptions must be catchable, not abort the module
 try {
   M.parse("definitely not coords");

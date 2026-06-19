@@ -10,7 +10,9 @@
 #include "geo/format.hpp"
 #include "geo/geodesic.hpp"
 #include "geo/magnetic.hpp"
+#include "geo/radar.hpp"
 #include "geo/tactical.hpp"
+#include "geo/track.hpp"
 
 using namespace emscripten;
 
@@ -46,6 +48,38 @@ AspectResult aspect_angle(geo::LatLon ownship, geo::LatLon target,
   const auto a =
       geo::aspect_angle(ownship, target, geo::Bearing::from_degrees(heading_deg));
   return {a.angle_deg, a.side == '\0' ? "" : std::string(1, a.side)};
+}
+
+// Radar — heights and ranges cross the boundary as metres.
+double slant_range(geo::LatLon a, double ha, geo::LatLon b, double hb) {
+  return geo::slant_range(a, geo::Distance::from_meters(ha), b,
+                          geo::Distance::from_meters(hb))
+      .meters();
+}
+double slant_from_ground(double ground, double ha, double hb) {
+  return geo::slant_from_ground(geo::Distance::from_meters(ground),
+                                geo::Distance::from_meters(ha),
+                                geo::Distance::from_meters(hb))
+      .meters();
+}
+double ground_from_slant(double slant, double ha, double hb) {
+  return geo::ground_from_slant(geo::Distance::from_meters(slant),
+                                geo::Distance::from_meters(ha),
+                                geo::Distance::from_meters(hb))
+      .meters();
+}
+double radar_horizon(double height, bool four_thirds) {
+  return geo::radar_horizon(geo::Distance::from_meters(height), four_thirds).meters();
+}
+double radar_horizon_range(double ha, double hb, bool four_thirds) {
+  return geo::radar_horizon_range(geo::Distance::from_meters(ha),
+                                  geo::Distance::from_meters(hb), four_thirds)
+      .meters();
+}
+bool has_line_of_sight(geo::LatLon a, double ha, geo::LatLon b, double hb,
+                       bool four_thirds) {
+  return geo::has_line_of_sight(a, geo::Distance::from_meters(ha), b,
+                                geo::Distance::from_meters(hb), four_thirds);
 }
 
 // WMM data is --embed-file'd at /data/wmm (see CMakeLists). Loaded lazily on
@@ -177,4 +211,12 @@ EMSCRIPTEN_BINDINGS(geo_module) {
   function("fromBullseye", &from_bullseye);
   function("braa", &braa);
   function("aspectAngle", &aspect_angle);
+
+  function("slantRange", &slant_range);
+  function("slantFromGround", &slant_from_ground);
+  function("groundFromSlant", &ground_from_slant);
+  function("radarHorizon", &radar_horizon);
+  function("radarHorizonRange", &radar_horizon_range);
+  function("hasLineOfSight", &has_line_of_sight);
+  function("deadReckon", &geo::dead_reckon);
 }
