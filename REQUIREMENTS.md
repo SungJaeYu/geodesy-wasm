@@ -47,8 +47,17 @@ Oracle: HLR-GEO-020 is verified against NOAA's official `WMM2025_TestValues.txt`
 geometry (equator/meridian, cardinal aspect, vertical separation) and forward/
 inverse round-trips so a passing test proves the behaviour independently.
 
-## Phase 3 (planned, not yet implemented)
+## Phase 3 — Route & Area (engine complete)
 
-Route/area: waypoint chains, radial & range-range intersections, cross/along-track
-distance, sector containment, polygon (area, centroid, point-in-polygon). Each
-lands with its own HLR-GEO-0xx row and known-answer test.
+| HLR | Requirement | Function | Test (`tests/`) |
+|-----|-------------|----------|-----------------|
+| HLR-GEO-050 | Radial (geodesic) intersection of two point+bearing lines | `radial_intersection` | `Intersection.RadialOnEquatorAndMeridian` |
+| HLR-GEO-051 | Range-range intersection of two range rings (0/1/2 solutions) | `range_range_intersection` | `Intersection.RangeRangeRecoversTarget` |
+| HLR-GEO-052 | Cross-track / along-track distance + closest point on a leg | `cross_track_distance` / `along_track_distance` / `closest_point_on_leg` | `Intersection.CrossAndAlongTrack` |
+| HLR-GEO-053 | Sector containment (bearing wedge + range band) | `sector_contains` | `Geometry.SectorContainment` |
+| HLR-GEO-054 | Geodesic polygon area + perimeter | `polygon_area` | `Geometry.PolygonAreaOfUnitCell` |
+| HLR-GEO-055 | Polygon centroid + point-in-polygon | `polygon_centroid` / `point_in_polygon` | `Geometry.CentroidAndContainment` |
+
+Closed-form / round-trip oracles (equator+meridian crossing, range-ring target
+recovery, 1° off-track geometry, unit-cell area ≈1.234e10 m²). Waypoint chains
+are repeated `forward` calls composed in the UI layer.

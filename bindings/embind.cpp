@@ -7,8 +7,12 @@
 
 #include <string>
 
+#include <vector>
+
 #include "geo/format.hpp"
 #include "geo/geodesic.hpp"
+#include "geo/geometry.hpp"
+#include "geo/intersection.hpp"
 #include "geo/magnetic.hpp"
 #include "geo/radar.hpp"
 #include "geo/tactical.hpp"
@@ -80,6 +84,52 @@ bool has_line_of_sight(geo::LatLon a, double ha, geo::LatLon b, double hb,
                        bool four_thirds) {
   return geo::has_line_of_sight(a, geo::Distance::from_meters(ha), b,
                                 geo::Distance::from_meters(hb), four_thirds);
+}
+
+// Route / area (Phase 3).
+geo::LatLon radial_intersection(geo::LatLon p1, double b1, geo::LatLon p2,
+                                double b2) {
+  return geo::radial_intersection(p1, geo::Bearing::from_degrees(b1), p2,
+                                  geo::Bearing::from_degrees(b2));
+}
+geo::RangeRangeFix range_range_intersection(geo::LatLon p1, double r1,
+                                            geo::LatLon p2, double r2) {
+  return geo::range_range_intersection(p1, geo::Distance::from_meters(r1), p2,
+                                       geo::Distance::from_meters(r2));
+}
+double cross_track_distance(geo::LatLon a, geo::LatLon b, geo::LatLon c) {
+  return geo::cross_track_distance(a, b, c).meters();
+}
+double along_track_distance(geo::LatLon a, geo::LatLon b, geo::LatLon c) {
+  return geo::along_track_distance(a, b, c).meters();
+}
+bool sector_contains(geo::LatLon center, geo::LatLon p, double bmin, double bmax,
+                     double rmin, double rmax) {
+  return geo::sector_contains(center, p, geo::Bearing::from_degrees(bmin),
+                              geo::Bearing::from_degrees(bmax),
+                              geo::Distance::from_meters(rmin),
+                              geo::Distance::from_meters(rmax));
+}
+
+// Polygons cross the boundary as a plain JS array of {lat,lon}.
+std::vector<geo::LatLon> to_latlons(const val& arr) {
+  std::vector<geo::LatLon> v;
+  const unsigned n = arr["length"].as<unsigned>();
+  v.reserve(n);
+  for (unsigned i = 0; i < n; ++i) {
+    const val o = arr[i];
+    v.push_back({o["lat"].as<double>(), o["lon"].as<double>()});
+  }
+  return v;
+}
+geo::PolygonMeasure polygon_area(const val& arr) {
+  return geo::polygon_area(to_latlons(arr));
+}
+geo::LatLon polygon_centroid(const val& arr) {
+  return geo::polygon_centroid(to_latlons(arr));
+}
+bool point_in_polygon(const val& arr, geo::LatLon p) {
+  return geo::point_in_polygon(to_latlons(arr), p);
 }
 
 // WMM data is --embed-file'd at /data/wmm (see CMakeLists). Loaded lazily on
@@ -186,6 +236,15 @@ EMSCRIPTEN_BINDINGS(geo_module) {
       .field("angleDeg", &AspectResult::angle_deg)
       .field("side", &AspectResult::side);
 
+  value_object<geo::RangeRangeFix>("RangeRangeFix")
+      .field("count", &geo::RangeRangeFix::count)
+      .field("a", &geo::RangeRangeFix::a)
+      .field("b", &geo::RangeRangeFix::b);
+
+  value_object<geo::PolygonMeasure>("PolygonMeasure")
+      .field("areaM2", &geo::PolygonMeasure::area_m2)
+      .field("perimeterM", &geo::PolygonMeasure::perimeter_m);
+
   function("forwardEllipsoidal", &forward_ellipsoidal);
   function("forwardSpherical", &forward_spherical);
   function("inverseEllipsoidal", &inverse_ellipsoidal);
@@ -219,4 +278,14 @@ EMSCRIPTEN_BINDINGS(geo_module) {
   function("radarHorizonRange", &radar_horizon_range);
   function("hasLineOfSight", &has_line_of_sight);
   function("deadReckon", &geo::dead_reckon);
+
+  function("radialIntersection", &radial_intersection);
+  function("rangeRangeIntersection", &range_range_intersection);
+  function("crossTrackDistance", &cross_track_distance);
+  function("alongTrackDistance", &along_track_distance);
+  function("closestPointOnLeg", &geo::closest_point_on_leg);
+  function("sectorContains", &sector_contains);
+  function("polygonArea", &polygon_area);
+  function("polygonCentroid", &polygon_centroid);
+  function("pointInPolygon", &point_in_polygon);
 }

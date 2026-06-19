@@ -66,6 +66,19 @@ const dr = M.deadReckon({ lat: 37, lon: 127 }, 200, 150, 60);
 const drArc = M.inverseEllipsoidal({ lat: 37, lon: 127 }, dr);
 near(drArc.distanceM, 15000, 1, "dead reckon distance");
 
+// Phase 3: intersections, cross/along-track, polygon
+const xi = M.radialIntersection({ lat: 0, lon: 0 }, 90, { lat: 0, lon: 10 }, 0);
+near(xi.lat, 0, 1e-6, "radial intersection lat");
+near(xi.lon, 10, 1e-6, "radial intersection lon");
+near(Math.abs(M.crossTrackDistance({ lat: 0, lon: 0 }, { lat: 0, lon: 10 }, { lat: 1, lon: 5 })) / 1000, 111.2, 0.1, "cross-track ~1deg");
+
+// polygon: pass a JS array (auto-converted to VectorLatLon)
+const sq = [{ lat: 0, lon: 0 }, { lat: 0, lon: 1 }, { lat: 1, lon: 1 }, { lat: 1, lon: 0 }];
+const pm = M.polygonArea(sq);
+near(pm.areaM2 / 1e10, 1.234, 0.01, "polygon area ~1.234e10");
+if (!M.pointInPolygon(sq, { lat: 0.5, lon: 0.5 })) { console.error("FAIL point-in-polygon"); failures++; }
+else console.log("ok   point in polygon");
+
 // exceptions must be catchable, not abort the module
 try {
   M.parse("definitely not coords");

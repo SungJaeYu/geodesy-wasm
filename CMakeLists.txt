@@ -45,6 +45,8 @@ add_library(geo STATIC
   src/tactical.cpp
   src/radar.cpp
   src/track.cpp
+  src/intersection.cpp
+  src/geometry.cpp
 )
 target_include_directories(geo PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(geo PUBLIC GeographicLib::GeographicLib)
@@ -92,6 +94,8 @@ else()
       tests/tactical.test.cpp
       tests/radar.test.cpp
       tests/track.test.cpp
+      tests/intersection.test.cpp
+      tests/geometry.test.cpp
     )
     target_link_libraries(geo_tests PRIVATE geo GTest::gtest_main)
     target_compile_options(geo_tests PRIVATE -Wall -Wextra)
