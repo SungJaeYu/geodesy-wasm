@@ -61,3 +61,11 @@ inverse round-trips so a passing test proves the behaviour independently.
 Closed-form / round-trip oracles (equator+meridian crossing, range-ring target
 recovery, 1° off-track geometry, unit-cell area ≈1.234e10 m²). Waypoint chains
 are repeated `forward` calls composed in the UI layer.
+
+## Phase 4 — Utility (UI layer)
+
+Map measure, batch convert, and CSV/KML/GPX import-export are composed in the UI
+from existing engine bindings (`inverse_*`, `parse`, `to_*`); terrain elevation
+calls an external DEM API. No new engine HLRs — the only core change was making
+`parse` accept MGRS with grouping spaces ("52S CH 12345 67890"), covered by
+`Parse.MgrsWithSpaces` under HLR-GEO-011.

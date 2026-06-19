@@ -138,7 +138,16 @@ LatLon parse(const std::string& text) {
 
   const CoordFormat fmt = detect_format(t);
   try {
-    if (fmt == CoordFormat::MGRS || fmt == CoordFormat::UTM) {
+    if (fmt == CoordFormat::MGRS) {
+      // GeoCoords only accepts compact MGRS, so drop grouping spaces.
+      std::string compact;
+      for (char c : t) {
+        if (!std::isspace(static_cast<unsigned char>(c))) compact.push_back(c);
+      }
+      GeographicLib::GeoCoords g(compact);
+      return LatLon{g.Latitude(), g.Longitude()};
+    }
+    if (fmt == CoordFormat::UTM) {
       GeographicLib::GeoCoords g(t);
       return LatLon{g.Latitude(), g.Longitude()};
     }

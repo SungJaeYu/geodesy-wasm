@@ -61,6 +61,15 @@ TEST(Detect, ClassifiesByShape) {
   EXPECT_EQ(geo::detect_format("not a coordinate"), CoordFormat::Unknown);
 }
 
+// HLR-GEO-011: MGRS with grouping spaces ("52S CH 12345 67890") parses the same
+// as the compact form (GeoCoords only accepts the compact spelling).
+TEST(Parse, MgrsWithSpaces) {
+  const auto spaced = geo::parse("52S CH 12345 67890");
+  const auto compact = geo::parse("52SCH1234567890");
+  EXPECT_NEAR(spaced.lat_deg, compact.lat_deg, 1e-9);
+  EXPECT_NEAR(spaced.lon_deg, compact.lon_deg, 1e-9);
+}
+
 // HLR-GEO-011: bad input is rejected, not silently mis-parsed.
 TEST(Parse, RejectsGarbage) {
   EXPECT_THROW(geo::parse("definitely not coords"), std::invalid_argument);
