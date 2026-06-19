@@ -1,0 +1,31 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  native-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install toolchain
+        run: sudo apt-get update && sudo apt-get install -y cmake g++ ninja-build
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
+      - name: Build
+        run: cmake --build build -j
+      - name: GoogleTest (our suite only)
+        run: ctest --test-dir build -L geo --output-on-failure
+
+  wasm-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mymindstorm/setup-emsdk@v14
+      - name: Configure (emscripten)
+        run: emcmake cmake -S . -B build-wasm -DCMAKE_BUILD_TYPE=Release
+      - name: Build WASM module
+        run: cmake --build build-wasm -j
+      - name: Verify artifacts exist
+        run: test -f build-wasm/geo.js && test -f build-wasm/geo.wasm
